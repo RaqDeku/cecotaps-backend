@@ -1,24 +1,79 @@
-interface Location {
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsNumberString,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { ConflictSeverity } from '../constants/conflict.statuses';
+
+class Location {
+  @IsNotEmpty()
+  @IsNumberString()
   lat: string;
-  long: string;
+
+  @IsNotEmpty()
+  @IsNumberString()
+  lng: string;
 }
 
-interface Actors {
+class Actors {
+  @IsNumber()
+  @IsNotEmpty()
   id: number;
 }
 
-interface Reporter {
+class Reporter {
+  @IsNotEmpty()
+  @IsString()
   name: string;
+
+  @IsOptional()
+  @IsEmail()
   email?: string;
+
+  @IsNotEmpty()
+  @IsString()
   phone: string;
 }
 
 export class ReportConflictDto {
+  @IsNumber()
+  @IsNotEmpty()
   region_id: number;
+
+  @IsNumber()
+  @IsNotEmpty()
   district_id: number;
+
+  @IsNotEmpty()
   location: Location;
+
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+
+  @IsString()
+  @IsEnum(ConflictSeverity, {
+    message: `Severity must be one of the following: ${Object.values(
+      ConflictSeverity,
+    ).join(', ')}`,
+  })
+  severity: string;
+
+  @IsNotEmpty()
+  @IsString()
   conflict_type: string;
+
+  @IsNotEmpty()
   actors: Actors[];
+
+  @IsString({ each: true })
+  @IsOptional()
   media_uploads?: string[];
+
+  @IsOptional()
   reporter?: Reporter;
 }

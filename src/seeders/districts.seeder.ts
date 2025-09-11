@@ -10,7 +10,6 @@ export async function seedDistricts(dataSource: DataSource) {
 
   console.log('Processing districts...');
   const features = geojson.features;
-  console.log(features[5]);
 
   let inserted = 0;
 

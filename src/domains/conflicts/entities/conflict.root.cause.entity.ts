@@ -1,20 +1,25 @@
 import {
   Column,
   Entity,
-  JoinTable,
-  ManyToMany,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Conflicts } from './conflict.entity';
 
 @Entity()
-export class Actors {
+export class RootCauses {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: false })
-  name: string;
+  @Column()
+  conflict_id: number;
+
+  @Column({ enum: ['RootCause', 'TriggerEvent'], nullable: false })
+  cause_type: string;
+
+  @Column({ type: 'text', nullable: false })
+  description: string;
 
   @Column({ type: 'timestamp', nullable: false })
   created_at: Date;
@@ -26,7 +31,7 @@ export class Actors {
   deleted_at: Date;
 
   // Relation
-  @ManyToMany(() => Conflicts, (conflict) => conflict.actors)
-  @JoinTable({ name: 'conflict_actors' })
-  conflict: Conflicts[];
+  @ManyToOne(() => Conflicts, (conflict) => conflict.root_causes)
+  @JoinColumn({ name: 'conflict_id' })
+  conflict: Conflicts;
 }

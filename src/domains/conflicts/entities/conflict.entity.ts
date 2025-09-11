@@ -4,6 +4,7 @@ import {
   JoinColumn,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -11,7 +12,10 @@ import {
 import { ConflictLocations } from './conflict.location.entity';
 import { ConflictUploads } from './conflict.media.entity';
 import { Actors } from './actors.entity';
-import { ConflictReporter } from './conflict.reporter.entity';
+import { ConflictReporters } from './conflict.reporter.entity';
+import { ConflictApprovalStatus } from '../constants/conflict.statuses';
+import { RootCauses } from './conflict.root.cause.entity';
+import { InformationSources } from './conflict.info.source.entity';
 
 @Entity()
 export class Conflicts {
@@ -27,10 +31,10 @@ export class Conflicts {
   @Column({ nullable: false })
   location_id: number;
 
-  @Column({ enum: ['low', 'medium', 'high'], nullable: true })
+  @Column({ nullable: true })
   severity: string;
 
-  @Column({ enum: ['active', 'ongoing', 'resolved'], nullable: true })
+  @Column({ nullable: true })
   status: string;
 
   @Column({ type: 'date', nullable: false })
@@ -44,6 +48,29 @@ export class Conflicts {
 
   @Column({ nullable: true })
   reported_by: number;
+
+  @Column({
+    nullable: false,
+    enum: [
+      ConflictApprovalStatus.PENDING,
+      ConflictApprovalStatus.APPROVED,
+      ConflictApprovalStatus.REJECTED,
+    ],
+    default: `"${ConflictApprovalStatus.PENDING}"`,
+  })
+  approval_status: string;
+
+  @Column()
+  approved_by: number;
+
+  @Column({ type: 'timestamp', nullable: false })
+  created_at: Date;
+
+  @Column({ type: 'timestamp', nullable: false })
+  updated_at: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deleted_at: Date;
 
   //Relations
   @OneToOne(() => ConflictLocations, (location) => location.conflict, {
@@ -65,9 +92,19 @@ export class Conflicts {
   })
   actors: Actors[];
 
-  @OneToOne(() => ConflictReporter, (reporter) => reporter.conflict, {
+  @ManyToOne(() => ConflictReporters, (reporter) => reporter.conflicts, {
     cascade: true,
   })
   @JoinColumn({ name: 'reported_by' })
-  reporter: ConflictReporter;
+  reporter: ConflictReporters;
+
+  @OneToMany(() => RootCauses, (rootCause) => rootCause.conflict, {
+    cascade: true,
+  })
+  root_causes: RootCauses[];
+
+  @OneToMany(() => InformationSources, (source) => source.conflict, {
+    cascade: true,
+  })
+  information_sources: InformationSources[];
 }

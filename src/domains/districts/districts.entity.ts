@@ -20,6 +20,15 @@ export class Districts {
   })
   geom: typeorm.Polygon;
 
+  @typeorm.Column({ type: 'timestamp', nullable: false })
+  created_at: Date;
+
+  @typeorm.Column({ type: 'timestamp', nullable: false })
+  updated_at: Date;
+
+  @typeorm.Column({ type: 'timestamp', nullable: true })
+  deleted_at: Date;
+
   // Relations
   @typeorm.ManyToOne(() => Regions, (region) => region.districts)
   @typeorm.JoinColumn({ name: 'region_id' })
