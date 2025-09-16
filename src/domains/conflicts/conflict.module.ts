@@ -11,6 +11,12 @@ import { InformationSources } from './entities/conflict.info.source.entity';
 import { RootCauses } from './entities/conflict.root.cause.entity';
 import { ConflictReporters } from './entities/conflict.reporter.entity';
 import { ConflictUploads } from './entities/conflict.media.entity';
+import { ImpactAssessments } from './entities/impact.assessment.entity';
+import { InterventionActions } from './entities/intervention.actions.entity';
+import { PropertyDamages } from './entities/property.damage.entity';
+import { ConflictInterventions } from './entities/conflict.intervention.entity';
+import { ConflictInterventionActionsService } from './services/interventions.service';
+import { InterventionActionsController } from './controllers/interventions.controller';
 
 @Module({
   imports: [
@@ -22,9 +28,21 @@ import { ConflictUploads } from './entities/conflict.media.entity';
       RootCauses,
       ConflictReporters,
       ConflictUploads,
+      ImpactAssessments,
+      InterventionActions,
+      PropertyDamages,
+      ConflictInterventions,
     ]),
   ],
-  controllers: [ActorsController, ConflictController],
-  providers: [ActorsService, ConflictService],
+  controllers: [
+    ActorsController,
+    ConflictController,
+    InterventionActionsController,
+  ],
+  providers: [
+    ActorsService,
+    ConflictService,
+    ConflictInterventionActionsService,
+  ],
 })
 export class ConflictsModule {}

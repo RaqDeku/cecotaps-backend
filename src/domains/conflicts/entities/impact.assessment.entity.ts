@@ -2,24 +2,26 @@ import {
   Column,
   Entity,
   JoinColumn,
-  ManyToOne,
+  OneToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { PropertyDamages } from './property.damage.entity';
 import { Conflicts } from './conflict.entity';
 
 @Entity()
-export class InformationSources {
+export class ImpactAssessments {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   conflict_id: number;
 
-  @Column({ nullable: false })
-  source_name: string;
+  @Column({ nullable: true })
+  casualties: number;
 
   @Column({ nullable: true })
-  reference_link: string;
+  displacements: number;
 
   @Column({ type: 'timestamp', nullable: false })
   created_at: Date;
@@ -31,7 +33,17 @@ export class InformationSources {
   deleted_at: Date;
 
   // Relations
-  @ManyToOne(() => Conflicts, (conflict) => conflict.information_sources)
+  @OneToMany(
+    () => PropertyDamages,
+    (propertyDamage) => propertyDamage.impact_assessment,
+    {
+      cascade: true,
+      orphanedRowAction: 'delete',
+    },
+  )
+  property_damages: PropertyDamages[];
+
+  @OneToOne(() => Conflicts, (conflict) => conflict.impact_assessments)
   @JoinColumn({ name: 'conflict_id' })
   conflict: Conflicts;
 }

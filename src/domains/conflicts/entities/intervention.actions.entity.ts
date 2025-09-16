@@ -1,25 +1,19 @@
 import {
   Column,
   Entity,
-  JoinColumn,
-  ManyToOne,
+  JoinTable,
+  ManyToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Conflicts } from './conflict.entity';
 
 @Entity()
-export class InformationSources {
+export class InterventionActions {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  conflict_id: number;
-
   @Column({ nullable: false })
-  source_name: string;
-
-  @Column({ nullable: true })
-  reference_link: string;
+  name: string;
 
   @Column({ type: 'timestamp', nullable: false })
   created_at: Date;
@@ -30,8 +24,8 @@ export class InformationSources {
   @Column({ type: 'timestamp', nullable: true })
   deleted_at: Date;
 
-  // Relations
-  @ManyToOne(() => Conflicts, (conflict) => conflict.information_sources)
-  @JoinColumn({ name: 'conflict_id' })
-  conflict: Conflicts;
+  //Relations
+  @ManyToMany(() => Conflicts, (conflict) => conflict.interventions_actions)
+  @JoinTable({ name: 'conflict_intervention_actions' })
+  conflict: Conflicts[];
 }

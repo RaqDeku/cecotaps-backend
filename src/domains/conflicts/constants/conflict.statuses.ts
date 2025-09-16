@@ -14,6 +14,6 @@ export enum ConflictSeverity {
 
 export enum ConflictStatus {
   ACTIVE = 'active',
-  ONGOING = 'ongoing - mediation',
+  ONGOING = 'under intervention',
   RESOLVED = 'resolved',
 }

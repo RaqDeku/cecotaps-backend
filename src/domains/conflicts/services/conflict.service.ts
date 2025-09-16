@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ReportConflictDto } from '../dto/report.conflict.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Point, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Point, Repository } from 'typeorm';
 import { Conflicts } from '../entities/conflict.entity';
 import { ConflictLocations } from '../entities/conflict.location.entity';
 import { ConflictReporters } from '../entities/conflict.reporter.entity';
@@ -15,9 +15,17 @@ import { ConflictApprovalStatus } from '../constants/conflict.statuses';
 import { CursorPaginationDto } from '../../../common/pagination/cursor.pagination.dto';
 import { ConflictResponses } from '../responses/conflicts.response';
 import { CursorPaginator } from 'src/common/pagination/cursor.pagination';
-import { EditConflictDto } from '../dto/edit.conflict.dto';
+import {
+  EditConflictDto,
+  ImpactAssessment,
+  Intervention,
+} from '../dto/edit.conflict.dto';
 import { RootCauses } from '../entities/conflict.root.cause.entity';
 import { InformationSources } from '../entities/conflict.info.source.entity';
+import { InterventionActions } from '../entities/intervention.actions.entity';
+import { ConflictInterventions } from '../entities/conflict.intervention.entity';
+import { ImpactAssessments } from '../entities/impact.assessment.entity';
+import { PropertyDamages } from '../entities/property.damage.entity';
 
 @Injectable()
 export class ConflictService extends CursorPaginator<Conflicts> {
@@ -30,6 +38,8 @@ export class ConflictService extends CursorPaginator<Conflicts> {
     private readonly conflictRootCauseRepository: Repository<RootCauses>,
     @InjectRepository(InformationSources)
     private readonly conflictInfoSourceRepository: Repository<InformationSources>,
+
+    private readonly dataSource: DataSource,
   ) {
     super();
   }
@@ -108,15 +118,12 @@ export class ConflictService extends CursorPaginator<Conflicts> {
     const queryBuilder = this.conflictRepository
       .createQueryBuilder('conflicts')
       .leftJoinAndSelect('conflicts.reporter', 'reporter')
+      .leftJoinAndSelect('conflicts.actors', 'actors')
       .where('conflicts.approval_status = :status', {
         status: ConflictApprovalStatus.PENDING,
       });
 
-    const result = await this.applyPagination(queryBuilder, paginationDto);
-    return {
-      ...result,
-      data: ConflictResponses.conflictReports(result.data),
-    };
+    return await this.applyPagination(queryBuilder, paginationDto);
   }
 
   async getAllConflicts(paginationDto: CursorPaginationDto, filters?: any) {
@@ -129,17 +136,16 @@ export class ConflictService extends CursorPaginator<Conflicts> {
     const queryBuilder = this.conflictRepository
       .createQueryBuilder('conflicts')
       .innerJoinAndSelect('conflicts.location', 'location')
-      .innerJoinAndSelect('location.district', 'district');
+      .innerJoinAndSelect('location.district', 'district')
+      .where('conflicts.approval_status = :status', {
+        status: ConflictApprovalStatus.APPROVED,
+      });
 
-    const result = await this.applyPagination(queryBuilder, paginationDto);
-    return {
-      ...result,
-      data: ConflictResponses.collection(result.data),
-    };
+    return await this.applyPagination(queryBuilder, paginationDto);
   }
 
-  async getConflictById(id: number) {
-    const conflict = await this.conflictRepository.findOne({
+  private async getConflictBaseQuery(id: number, relations: string[] = []) {
+    return await this.conflictRepository.findOne({
       where: { id },
       relations: [
         'location.district',
@@ -148,14 +154,35 @@ export class ConflictService extends CursorPaginator<Conflicts> {
         'reporter',
         'root_causes',
         'information_sources',
+        ...relations,
       ],
     });
+  }
+
+  async getConflict(id: number) {
+    const conflict = await this.getConflictBaseQuery(id, [
+      'interventions_actions',
+      'impact_assessments.property_damages',
+    ]);
 
     if (!conflict) {
       throw new BadRequestException('Conflict not found');
     }
 
     return ConflictResponses.editConflictPayload(conflict);
+  }
+
+  async getConflictDetails(id: number) {
+    const conflict = await this.getConflictBaseQuery(id, [
+      'impact_assessments.property_damages',
+      'interventions.actors',
+    ]);
+
+    if (!conflict) {
+      throw new BadRequestException('Conflict not found');
+    }
+
+    return ConflictResponses.conflictDetails(conflict);
   }
 
   async getConflictsLocations() {
@@ -168,30 +195,65 @@ export class ConflictService extends CursorPaginator<Conflicts> {
   }
 
   async approveConflict(id: number, editConflictDto: EditConflictDto) {
-    const conflict = await this.conflictRepository.findOne({
-      where: {
-        id,
-        approval_status: ConflictApprovalStatus.PENDING,
-      },
+    return await this.dataSource.transaction(async (manager) => {
+      const conflict = await manager.getRepository(Conflicts).findOne({
+        where: {
+          id,
+          approval_status: ConflictApprovalStatus.PENDING,
+        },
+      });
+
+      if (!conflict) {
+        throw new BadRequestException('Conflict not found');
+      }
+
+      try {
+        await this.applyConflictEdits(conflict, editConflictDto, manager);
+
+        conflict.approval_status = ConflictApprovalStatus.APPROVED;
+        conflict.last_updated = new Date();
+
+        await manager.getRepository(Conflicts).save(conflict);
+
+        return { message: 'Conflict approved successfully' };
+      } catch (error) {
+        console.error('Error approving conflict:', error);
+        throw new InternalServerErrorException('Failed to approve conflict');
+      }
     });
+  }
 
-    if (!conflict) {
-      throw new BadRequestException('Conflict not found');
-    }
+  async editConflict(id: number, editConflictDto: EditConflictDto) {
+    return await this.dataSource.transaction(async (manager) => {
+      const conflict = await manager.getRepository(Conflicts).findOne({
+        where: {
+          id,
+        },
+        relations: [
+          'root_causes',
+          'information_sources',
+          'actors',
+          'interventions',
+        ],
+      });
 
-    try {
-      await this.applyConflictEdits(conflict, editConflictDto);
+      if (!conflict) {
+        throw new BadRequestException('Conflict not found');
+      }
 
-      conflict.approval_status = ConflictApprovalStatus.APPROVED;
-      conflict.last_updated = new Date();
+      try {
+        await this.applyConflictEdits(conflict, editConflictDto, manager);
 
-      await this.conflictRepository.save(conflict);
+        conflict.last_updated = new Date();
 
-      return { message: 'Conflict approved successfully' };
-    } catch (error) {
-      console.error('Error approving conflict:', error);
-      throw new InternalServerErrorException('Failed to approve conflict');
-    }
+        await manager.getRepository(Conflicts).save(conflict);
+
+        return { message: 'Conflict edited successfully' };
+      } catch (error) {
+        console.error('Error editing conflict:', error);
+        throw new InternalServerErrorException('Failed to edit conflict');
+      }
+    });
   }
 
   /**
@@ -200,8 +262,10 @@ export class ConflictService extends CursorPaginator<Conflicts> {
   private async applyConflictEdits(
     conflict: Conflicts,
     dto: EditConflictDto,
+    manager: EntityManager,
   ): Promise<void> {
-    const { basic_info, details, actors } = dto;
+    const { basic_info, details, actors, intervention, impact_assessment } =
+      dto;
 
     // Basic info
     if (basic_info) {
@@ -209,11 +273,25 @@ export class ConflictService extends CursorPaginator<Conflicts> {
       conflict.conflict_type = basic_info.type ?? conflict.conflict_type;
       conflict.severity = basic_info.severity ?? conflict.severity;
       conflict.status = basic_info.status ?? conflict.status;
+
+      if (basic_info.intervention_actions?.length > 0) {
+        conflict.interventions_actions = await manager
+          .getRepository(InterventionActions)
+          .findBy({
+            id: In(basic_info.intervention_actions),
+          });
+      }
     }
 
     // Details
     if (details) {
       conflict.description = details.description ?? conflict.description;
+
+      if (conflict?.root_causes?.length > 0) {
+        await manager.getRepository(RootCauses).delete({
+          conflict_id: conflict.id,
+        });
+      }
 
       const rootCauses = (details.root_causes ?? []).map((cause) =>
         this.createCause(cause, 'RootCause'),
@@ -224,6 +302,12 @@ export class ConflictService extends CursorPaginator<Conflicts> {
       );
 
       conflict.root_causes = [...rootCauses, ...triggerEvents];
+
+      if (conflict?.information_sources?.length > 0) {
+        await manager.getRepository(InformationSources).delete({
+          conflict_id: conflict.id,
+        });
+      }
 
       conflict.information_sources = (details.info_sources ?? []).map(
         (source) => this.createInfoSource(source.name, source.reference),
@@ -236,16 +320,35 @@ export class ConflictService extends CursorPaginator<Conflicts> {
         id: In(actors),
       });
     }
+
+    // Interventions
+    if (intervention) {
+      conflict.interventions = [
+        ...(conflict.interventions || []),
+        await this.createIntervention(intervention, manager),
+      ];
+    }
+
+    // Impact Assessment
+    if (impact_assessment) {
+      await manager.getRepository(ImpactAssessments).delete({
+        conflict_id: conflict?.id,
+      });
+
+      conflict.impact_assessments =
+        this.createImpactAssessment(impact_assessment);
+    }
   }
 
   /**
    * Factory for root cause/trigger event.
    */
-  private createCause(description: string, type: 'RootCause' | 'TriggerEvent') {
-    const cause = new RootCauses();
-    cause.cause_type = type;
-    cause.description = description;
-    return cause;
+  private createCause(cause: any, type: 'RootCause' | 'TriggerEvent') {
+    const conflictCause = new RootCauses();
+    conflictCause.cause_type = type;
+    conflictCause.description = cause;
+
+    return conflictCause;
   }
 
   /**
@@ -256,5 +359,44 @@ export class ConflictService extends CursorPaginator<Conflicts> {
     infoSource.source_name = name;
     infoSource.reference_link = reference;
     return infoSource;
+  }
+
+  private async createIntervention(
+    intervention: Intervention,
+    manager: EntityManager,
+  ) {
+    const conflictIntervention = new ConflictInterventions();
+    conflictIntervention.description = intervention.description;
+    conflictIntervention.date = intervention.date;
+    conflictIntervention.outcome = intervention.outcome;
+
+    if (intervention.actors?.length > 0) {
+      conflictIntervention.actors = await manager.getRepository(Actors).findBy({
+        id: In(intervention.actors),
+      });
+    }
+
+    return conflictIntervention;
+  }
+
+  private createImpactAssessment(impactAssessment: ImpactAssessment) {
+    const conflictImpactAssessment = new ImpactAssessments();
+    conflictImpactAssessment.displacements = impactAssessment.displacements;
+    conflictImpactAssessment.casualties = impactAssessment.casualties;
+
+    if (impactAssessment.property_damages?.length > 0) {
+      conflictImpactAssessment.property_damages = (
+        impactAssessment.property_damages ?? []
+      )?.map((damage) => this.createPropertyDamage(damage));
+    }
+
+    return conflictImpactAssessment;
+  }
+
+  private createPropertyDamage(description: string) {
+    const propertyDamage = new PropertyDamages();
+    propertyDamage.description = description;
+
+    return propertyDamage;
   }
 }

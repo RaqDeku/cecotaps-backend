@@ -3,10 +3,10 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
-  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Conflicts } from './conflict.entity';
+import { ConflictInterventions } from './conflict.intervention.entity';
 
 @Entity()
 export class Actors {
@@ -29,4 +29,10 @@ export class Actors {
   @ManyToMany(() => Conflicts, (conflict) => conflict.actors)
   @JoinTable({ name: 'conflict_actors' })
   conflict: Conflicts[];
+
+  @ManyToMany(
+    () => ConflictInterventions,
+    (intervention) => intervention.actors,
+  )
+  interventions: ConflictInterventions[];
 }

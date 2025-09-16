@@ -16,6 +16,9 @@ import { ConflictReporters } from './conflict.reporter.entity';
 import { ConflictApprovalStatus } from '../constants/conflict.statuses';
 import { RootCauses } from './conflict.root.cause.entity';
 import { InformationSources } from './conflict.info.source.entity';
+import { ConflictInterventions } from './conflict.intervention.entity';
+import { ImpactAssessments } from './impact.assessment.entity';
+import { InterventionActions } from './intervention.actions.entity';
 
 @Entity()
 export class Conflicts {
@@ -100,6 +103,7 @@ export class Conflicts {
 
   @OneToMany(() => RootCauses, (rootCause) => rootCause.conflict, {
     cascade: true,
+    orphanedRowAction: 'delete',
   })
   root_causes: RootCauses[];
 
@@ -107,4 +111,32 @@ export class Conflicts {
     cascade: true,
   })
   information_sources: InformationSources[];
+
+  @OneToMany(
+    () => ConflictInterventions,
+    (intervention) => intervention.conflict,
+    {
+      cascade: true,
+    },
+  )
+  interventions: ConflictInterventions[];
+
+  @OneToOne(
+    () => ImpactAssessments,
+    (impactAssessment) => impactAssessment.conflict,
+    {
+      cascade: true,
+    },
+  )
+  impact_assessments: ImpactAssessments;
+
+  @ManyToMany(() => InterventionActions, (action) => action.conflict, {
+    cascade: true,
+  })
+  @JoinTable({
+    name: 'conflict_intervention_actions',
+    joinColumn: { name: 'conflict_id' },
+    inverseJoinColumn: { name: 'intervention_action_id' },
+  })
+  interventions_actions: InterventionActions[];
 }
