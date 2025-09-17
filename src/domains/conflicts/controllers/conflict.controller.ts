@@ -5,6 +5,7 @@ import { CursorPaginationDto } from '../../../common/pagination/cursor.paginatio
 import { EditConflictDto } from '../dto/edit.conflict.dto';
 import { ApiResponse } from 'src/common/api.response';
 import { ConflictResponses } from '../responses/conflicts.response';
+import { ConflictFilters } from '../dto/conflicts.filters.dto';
 
 @Controller('conflicts')
 export class ConflictController extends ApiResponse {
@@ -18,8 +19,10 @@ export class ConflictController extends ApiResponse {
   }
 
   @Get('/locations')
-  async getConflictsLocations() {
-    return await this.conflictService.getConflictsLocations();
+  async getConflictsLocations(@Query() conflictFilters: ConflictFilters) {
+    return this.response({
+      data: await this.conflictService.getConflictsLocations(conflictFilters),
+    });
   }
 
   @Get('/reports')

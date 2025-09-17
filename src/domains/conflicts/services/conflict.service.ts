@@ -11,7 +11,10 @@ import { ConflictLocations } from '../entities/conflict.location.entity';
 import { ConflictReporters } from '../entities/conflict.reporter.entity';
 import { Actors } from '../entities/actors.entity';
 import { ConflictUploads } from '../entities/conflict.media.entity';
-import { ConflictApprovalStatus } from '../constants/conflict.statuses';
+import {
+  ConflictApprovalStatus,
+  ConflictStatus,
+} from '../constants/conflict.statuses';
 import { CursorPaginationDto } from '../../../common/pagination/cursor.pagination.dto';
 import { ConflictResponses } from '../responses/conflicts.response';
 import { CursorPaginator } from 'src/common/pagination/cursor.pagination';
@@ -26,6 +29,7 @@ import { InterventionActions } from '../entities/intervention.actions.entity';
 import { ConflictInterventions } from '../entities/conflict.intervention.entity';
 import { ImpactAssessments } from '../entities/impact.assessment.entity';
 import { PropertyDamages } from '../entities/property.damage.entity';
+import { ConflictFilters } from '../dto/conflicts.filters.dto';
 
 @Injectable()
 export class ConflictService extends CursorPaginator<Conflicts> {
@@ -185,13 +189,93 @@ export class ConflictService extends CursorPaginator<Conflicts> {
     return ConflictResponses.conflictDetails(conflict);
   }
 
-  async getConflictsLocations() {
-    return await this.conflictRepository.find({
-      where: {
-        approval_status: ConflictApprovalStatus.APPROVED,
-      },
-      relations: ['location'],
-    });
+  async getConflictsLocations(conflictFilters: ConflictFilters) {
+    const queryBuilder = this.conflictRepository
+      .createQueryBuilder('conflict')
+      .leftJoinAndSelect('conflict.location', 'location')
+      .leftJoinAndSelect('location.district', 'district')
+      .leftJoinAndSelect('location.region', 'region')
+      .leftJoinAndSelect('conflict.actors', 'actors')
+      .leftJoinAndSelect(
+        'conflict.interventions_actions',
+        'interventions_actions',
+      )
+      .where('conflict.approval_status = :status', {
+        status: ConflictApprovalStatus.APPROVED,
+      })
+      .select([
+        'conflict.id',
+        'conflict.title',
+        'conflict.conflict_type',
+        'conflict.severity',
+        'conflict.status',
+        'conflict.date_reported',
+        'location.geom',
+        'district.name',
+        'region.name',
+      ]);
+
+    this.applyConflictLocationsFilters(queryBuilder, conflictFilters);
+
+    return await queryBuilder.getMany();
+  }
+
+  private applyConflictLocationsFilters(
+    queryBuilder: any,
+    filters: ConflictFilters,
+  ) {
+    const {
+      from_date,
+      to_date,
+      districts,
+      conflict_types,
+      actors_involved,
+      intervention_actions,
+      status,
+    } = filters;
+
+    if (from_date && to_date) {
+      queryBuilder.andWhere(
+        'conflict.date_reported BETWEEN :from_date AND :to_date',
+        {
+          from_date,
+          to_date,
+        },
+      );
+    }
+
+    if (districts && districts?.length > 0) {
+      queryBuilder.andWhere('district.id IN (:...districts)', {
+        districts,
+      });
+    }
+
+    if (conflict_types && conflict_types?.length > 0) {
+      queryBuilder.andWhere('conflict.conflict_type IN (:...conflict_types)', {
+        conflict_types,
+      });
+    }
+
+    if (actors_involved && actors_involved?.length > 0) {
+      queryBuilder.andWhere('actors.id IN (:...actors_involved)', {
+        actors_involved,
+      });
+    }
+
+    if (intervention_actions && intervention_actions?.length > 0) {
+      queryBuilder.andWhere(
+        'interventions_actions.id IN (:...intervention_actions)',
+        {
+          intervention_actions,
+        },
+      );
+    }
+
+    if (status) {
+      queryBuilder.andWhere('conflict.status = :status', {
+        status: status as ConflictStatus,
+      });
+    }
   }
 
   async approveConflict(id: number, editConflictDto: EditConflictDto) {
