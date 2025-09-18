@@ -32,6 +32,12 @@ export class ConflictFilters {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') return value.split(',').map((v) => v.trim());
+
+    return undefined;
+  })
   conflict_types?: string[];
 
   @IsOptional()

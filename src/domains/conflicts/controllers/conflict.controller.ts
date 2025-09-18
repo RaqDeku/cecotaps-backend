@@ -6,10 +6,14 @@ import { EditConflictDto } from '../dto/edit.conflict.dto';
 import { ApiResponse } from 'src/common/api.response';
 import { ConflictResponses } from '../responses/conflicts.response';
 import { ConflictFilters } from '../dto/conflicts.filters.dto';
+import { AnalyticsService } from '../services/analytics.service';
 
 @Controller('conflicts')
 export class ConflictController extends ApiResponse {
-  constructor(private readonly conflictService: ConflictService) {
+  constructor(
+    private readonly conflictService: ConflictService,
+    private readonly analyticsService: AnalyticsService,
+  ) {
     super();
   }
 

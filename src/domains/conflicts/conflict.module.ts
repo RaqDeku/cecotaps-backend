@@ -17,6 +17,7 @@ import { PropertyDamages } from './entities/property.damage.entity';
 import { ConflictInterventions } from './entities/conflict.intervention.entity';
 import { ConflictInterventionActionsService } from './services/interventions.service';
 import { InterventionActionsController } from './controllers/interventions.controller';
+import { AnalyticsService } from './services/analytics.service';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { InterventionActionsController } from './controllers/interventions.contr
     ActorsService,
     ConflictService,
     ConflictInterventionActionsService,
+    AnalyticsService,
   ],
 })
 export class ConflictsModule {}

@@ -200,8 +200,8 @@ export class ConflictService extends CursorPaginator<Conflicts> {
         'conflict.interventions_actions',
         'interventions_actions',
       )
-      .where('conflict.approval_status = :status', {
-        status: ConflictApprovalStatus.APPROVED,
+      .where('conflict.approval_status = :approvalStatus', {
+        approvalStatus: ConflictApprovalStatus.APPROVED,
       })
       .select([
         'conflict.id',
@@ -273,7 +273,7 @@ export class ConflictService extends CursorPaginator<Conflicts> {
 
     if (status) {
       queryBuilder.andWhere('conflict.status = :status', {
-        status: status as ConflictStatus,
+        status: status,
       });
     }
   }

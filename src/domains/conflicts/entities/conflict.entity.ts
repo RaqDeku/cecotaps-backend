@@ -13,7 +13,10 @@ import { ConflictLocations } from './conflict.location.entity';
 import { ConflictUploads } from './conflict.media.entity';
 import { Actors } from './actors.entity';
 import { ConflictReporters } from './conflict.reporter.entity';
-import { ConflictApprovalStatus } from '../constants/conflict.statuses';
+import {
+  ConflictApprovalStatus,
+  ConflictStatus,
+} from '../constants/conflict.statuses';
 import { RootCauses } from './conflict.root.cause.entity';
 import { InformationSources } from './conflict.info.source.entity';
 import { ConflictInterventions } from './conflict.intervention.entity';
@@ -37,7 +40,14 @@ export class Conflicts {
   @Column({ nullable: true })
   severity: string;
 
-  @Column({ nullable: true })
+  @Column({
+    nullable: true,
+    enum: [
+      ConflictStatus.ACTIVE,
+      ConflictStatus.RESOLVED,
+      ConflictStatus.ONGOING,
+    ],
+  })
   status: string;
 
   @Column({ type: 'date', nullable: false })
