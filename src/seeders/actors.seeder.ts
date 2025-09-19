@@ -1,3 +1,6 @@
+import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
 import { DataSource } from 'typeorm';
 
 const AppDataSource = new DataSource({
@@ -7,6 +10,12 @@ const AppDataSource = new DataSource({
   username: process.env.DATABASE_USERNAME || 'postgres',
   password: process.env.DATABASE_PASSWORD || 'root',
   database: process.env.DATABASE_NAME || 'cecotaps_backend',
+  ssl: Boolean(process.env.DATABASE_SSL) && {
+    rejectUnauthorized: Boolean(process.env.DATABASE_REJECT_UNAUTHORIZED),
+    ca: fs
+      .readFileSync(path.resolve(process.cwd(), process.env.DATABASE_SSL_CA!))
+      .toString(),
+  },
 });
 
 interface Actor {

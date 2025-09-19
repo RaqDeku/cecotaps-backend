@@ -1,3 +1,6 @@
+import 'dotenv/config';
+import path from 'path';
+import fs from 'fs';
 import { DataSource } from 'typeorm';
 
 const url = 'https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_GHA_2.json';
@@ -62,6 +65,12 @@ const AppDataSource = new DataSource({
   username: process.env.DATABASE_USERNAME || 'postgres',
   password: process.env.DATABASE_PASSWORD || 'root',
   database: process.env.DATABASE_NAME || 'cecotaps_backend',
+  ssl: Boolean(process.env.DATABASE_SSL) && {
+    rejectUnauthorized: Boolean(process.env.DATABASE_REJECT_UNAUTHORIZED),
+    ca: fs
+      .readFileSync(path.resolve(process.cwd(), process.env.DATABASE_SSL_CA!))
+      .toString(),
+  },
 });
 
 async function run() {

@@ -18,6 +18,7 @@ import { ConflictInterventions } from './entities/conflict.intervention.entity';
 import { ConflictInterventionActionsService } from './services/interventions.service';
 import { InterventionActionsController } from './controllers/interventions.controller';
 import { AnalyticsService } from './services/analytics.service';
+import { AnalyticsController } from './controllers/analytics.controller';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { AnalyticsService } from './services/analytics.service';
     ActorsController,
     ConflictController,
     InterventionActionsController,
+    AnalyticsController,
   ],
   providers: [
     ActorsService,

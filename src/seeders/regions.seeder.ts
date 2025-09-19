@@ -1,12 +1,21 @@
+import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
 import { DataSource } from 'typeorm';
 
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DATABASE_HOST || 'localhost',
-  port: +(process.env.DATABASE_PORT || 5434),
-  username: process.env.DATABASE_USERNAME || 'postgres',
-  password: process.env.DATABASE_PASSWORD || 'root',
-  database: process.env.DATABASE_NAME || 'cecotaps_backend',
+  host: process.env.DATABASE_HOST,
+  port: +process.env.DATABASE_PORT!,
+  username: process.env.DATABASE_USERNAME,
+  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE_NAME,
+  ssl: Boolean(process.env.DATABASE_SSL) && {
+    rejectUnauthorized: Boolean(process.env.DATABASE_REJECT_UNAUTHORIZED),
+    ca: fs
+      .readFileSync(path.resolve(process.cwd(), process.env.DATABASE_SSL_CA!))
+      .toString(),
+  },
 });
 
 interface Region {

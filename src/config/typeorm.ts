@@ -13,12 +13,12 @@ const config = {
   username: `${process.env.DATABASE_USERNAME}`,
   password: `${process.env.DATABASE_PASSWORD}`,
   database: `${process.env.DATABASE_NAME}`,
-  ssl: Boolean(process.env.DATABASE_SSL) && {
-    rejectUnauthorized: Boolean(process.env.DATABASE_REJECT_UNAUTHORIZED),
-    ca: fs
-      .readFileSync(path.resolve(process.cwd(), process.env.DATABASE_SSL_CA!))
-      .toString(),
-  },
+  // ssl: (Boolean(process.env.DATABASE_SSL) ?? false) && {
+  //   rejectUnauthorized: Boolean(process.env.DATABASE_REJECT_UNAUTHORIZED),
+  //   ca: fs
+  //     .readFileSync(path.resolve(process.cwd(), process.env.DATABASE_SSL_CA!))
+  //     .toString(),
+  // },
   entities: ['dist/**/*.entity{.ts,.js}'],
   migrations: ['dist/migrations/*{.ts,.js}'],
   autoLoadEntities: true,
