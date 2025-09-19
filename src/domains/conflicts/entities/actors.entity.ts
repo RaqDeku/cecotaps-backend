@@ -27,8 +27,7 @@ export class Actors {
 
   // Relation
   @ManyToMany(() => Conflicts, (conflict) => conflict.actors)
-  @JoinTable({ name: 'conflict_actors' })
-  conflict: Conflicts[];
+  conflicts: Conflicts[];
 
   @ManyToMany(
     () => ConflictInterventions,

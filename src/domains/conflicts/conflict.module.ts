@@ -19,6 +19,7 @@ import { ConflictInterventionActionsService } from './services/interventions.ser
 import { InterventionActionsController } from './controllers/interventions.controller';
 import { AnalyticsService } from './services/analytics.service';
 import { AnalyticsController } from './controllers/analytics.controller';
+import { Regions } from '../regions/region.entity';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AnalyticsController } from './controllers/analytics.controller';
       InterventionActions,
       PropertyDamages,
       ConflictInterventions,
+      Regions,
     ]),
   ],
   controllers: [

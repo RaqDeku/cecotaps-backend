@@ -97,7 +97,7 @@ export class Conflicts {
   })
   media_uploads: ConflictUploads[];
 
-  @ManyToMany(() => Actors, (actor) => actor.conflict, { cascade: true })
+  @ManyToMany(() => Actors, (actor) => actor.conflicts, { cascade: true })
   @JoinTable({
     name: 'conflict_actors',
     joinColumn: { name: 'conflict_id', referencedColumnName: 'id' },

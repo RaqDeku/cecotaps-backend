@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { registerAs } from '@nestjs/config';
 import { config as dotenvConfig } from 'dotenv';
 import { DataSource, DataSourceOptions } from 'typeorm';
@@ -13,12 +14,19 @@ const config = {
   username: `${process.env.DATABASE_USERNAME}`,
   password: `${process.env.DATABASE_PASSWORD}`,
   database: `${process.env.DATABASE_NAME}`,
-  ssl: (Boolean(process.env.DATABASE_SSL) ?? false) && {
-    rejectUnauthorized: Boolean(process.env.DATABASE_REJECT_UNAUTHORIZED),
-    ca: fs
-      .readFileSync(path.resolve(process.cwd(), process.env.DATABASE_SSL_CA!))
-      .toString(),
-  },
+  ssl:
+    process.env.DATABASE_SSL === 'true'
+      ? {
+          rejectUnauthorized:
+            process.env.DATABASE_REJECT_UNAUTHORIZED === 'true',
+          ca: fs
+            .readFileSync(
+              path.resolve(process.cwd(), process.env.DATABASE_SSL_CA!),
+            )
+            .toString(),
+        }
+      : false,
+
   entities: ['dist/**/*.entity{.ts,.js}'],
   migrations: ['dist/migrations/*{.ts,.js}'],
   autoLoadEntities: true,

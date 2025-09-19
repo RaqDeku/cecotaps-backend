@@ -14,4 +14,32 @@ export class AnalyticsController extends ApiResponse {
       data: await this.analyticsService.getConflictsStats(),
     });
   }
+
+  @Get('/actors-involvement')
+  async getActorsInvolvement() {
+    return this.response({
+      data: await this.analyticsService.actorsInvolvement(),
+    });
+  }
+
+  @Get('/interventions-stats')
+  async getInterventionsStats() {
+    return this.response({
+      data: await this.analyticsService.interventionsStats(),
+    });
+  }
+
+  @Get('/regional-breakdown')
+  async getRegionalBreakdown() {
+    return this.response({
+      data: await this.analyticsService.regionalBreakdown(),
+    });
+  }
+
+  @Get('/conflict-trends')
+  async getConflictTrends() {
+    return this.response({
+      data: await this.analyticsService.conflictTrends(),
+    });
+  }
 }
