@@ -22,6 +22,11 @@ export class ConflictFilters {
   to_date?: Date;
 
   @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  region_id?: number;
+
+  @IsOptional()
   @IsArray()
   @IsNumber({}, { each: true })
   @Transform(({ value }) =>

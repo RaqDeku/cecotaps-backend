@@ -9,6 +9,7 @@ import {
   ConflictStatus,
 } from '../constants/conflict.statuses';
 import { Regions } from 'src/domains/regions/region.entity';
+import { InterventionActions } from '../entities/intervention.actions.entity';
 
 @Injectable()
 export class AnalyticsService {
@@ -17,6 +18,8 @@ export class AnalyticsService {
     private conflictsRepository: Repository<Conflicts>,
     @InjectRepository(Actors) private actorsRepository: Repository<Actors>,
     @InjectRepository(Regions) private regionRepository: Repository<Regions>,
+    @InjectRepository(InterventionActions)
+    private interventionActionsRepository: Repository<InterventionActions>,
   ) {}
 
   async getConflictsStats() {
@@ -88,17 +91,19 @@ export class AnalyticsService {
   }
 
   async interventionsStats() {
-    const queryBuilder = this.conflictsRepository
-      .createQueryBuilder('conflicts')
-      .leftJoin('conflicts.interventions_actions', 'interventions_actions')
-      .select('interventions_actions.id', 'id')
-      .addSelect('interventions_actions.name', 'name')
+    const queryBuilder = this.interventionActionsRepository
+      .createQueryBuilder('action')
+      .leftJoin(
+        'action.conflict',
+        'conflicts',
+        'conflicts.approval_status = :status',
+        { status: ConflictApprovalStatus.APPROVED },
+      )
+      .select('action.id', 'id')
+      .addSelect('action.name', 'name')
       .addSelect('COUNT(DISTINCT conflicts.id)', 'conflict_count')
-      .where('conflicts.approval_status = :status', {
-        status: ConflictApprovalStatus.APPROVED,
-      })
-      .groupBy('interventions_actions.id')
-      .addGroupBy('interventions_actions.name');
+      .groupBy('action.id')
+      .addGroupBy('action.name');
 
     const results = await queryBuilder.getRawMany<{
       id: number;
@@ -126,16 +131,58 @@ export class AnalyticsService {
       .leftJoin('region.conflict_locations', 'conflict_location')
       .leftJoin('conflict_location.conflict', 'conflict')
       .select('region.id', 'id')
+      // .where('conflict.approval_status = :status', {
+      //   status: ConflictApprovalStatus.APPROVED,
+      // })
+      .select('region.id')
       .addSelect('region.name', 'name')
       .addSelect('COUNT(DISTINCT conflict.id)', 'conflict_count')
+      .addSelect(
+        `SUM(CASE WHEN conflict.severity = '${ConflictSeverity.HIGH}' THEN 1 ELSE 0 END)`,
+        'high_count',
+      )
+      .addSelect(
+        `SUM(CASE WHEN conflict.severity = '${ConflictSeverity.MEDIUM_HIGH}' THEN 1 ELSE 0 END)`,
+        'high_medium_count',
+      )
+      .addSelect(
+        `SUM(CASE WHEN conflict.severity = '${ConflictSeverity.MEDIUM}' THEN 1 ELSE 0 END)`,
+        'medium_count',
+      )
+      .addSelect(
+        `SUM(CASE WHEN conflict.severity = '${ConflictSeverity.MEDIUM_LOW}' THEN 1 ELSE 0 END)`,
+        'low_medium_count',
+      )
+      .addSelect(
+        `SUM(CASE WHEN conflict.severity = '${ConflictSeverity.LOW}' THEN 1 ELSE 0 END)`,
+        'low_count',
+      )
       .groupBy('region.id')
       .addGroupBy('region.name');
 
-    return await queryBuilder.getRawMany<{
+    const results = await queryBuilder.getRawMany<{
       id: number;
       name: string;
       conflict_count: string;
+      high_count: string;
+      high_medium_count: string;
+      medium_count: string;
+      low_medium_count: string;
+      low_count: string;
     }>();
+
+    return results.map((r) => ({
+      id: r.id,
+      name: r.name,
+      breakdown: {
+        extreme: Number(r.high_count),
+        high_intensity: Number(r.high_medium_count),
+        medium: Number(r.medium_count),
+        low_intensity: Number(r.low_medium_count),
+        latent: Number(r.low_count),
+      },
+      conflict_count: Number(r.conflict_count),
+    }));
   }
 
   async conflictTrends() {

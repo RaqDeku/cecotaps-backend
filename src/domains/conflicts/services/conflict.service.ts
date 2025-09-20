@@ -228,6 +228,7 @@ export class ConflictService extends CursorPaginator<Conflicts> {
       from_date,
       to_date,
       districts,
+      region_id,
       conflict_types,
       actors_involved,
       intervention_actions,
@@ -242,6 +243,10 @@ export class ConflictService extends CursorPaginator<Conflicts> {
           to_date,
         },
       );
+    }
+
+    if (region_id) {
+      queryBuilder.andWhere('region.id = :region_id', { region_id });
     }
 
     if (districts && districts?.length > 0) {
