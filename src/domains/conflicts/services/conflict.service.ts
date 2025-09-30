@@ -11,10 +11,7 @@ import { ConflictLocations } from '../entities/conflict.location.entity';
 import { ConflictReporters } from '../entities/conflict.reporter.entity';
 import { Actors } from '../entities/actors.entity';
 import { ConflictUploads } from '../entities/conflict.media.entity';
-import {
-  ConflictApprovalStatus,
-  ConflictStatus,
-} from '../constants/conflict.statuses';
+import { ConflictApprovalStatus } from '../constants/conflict.statuses';
 import { CursorPaginationDto } from '../../../common/pagination/cursor.pagination.dto';
 import { ConflictResponses } from '../responses/conflicts.response';
 import { CursorPaginator } from 'src/common/pagination/cursor.pagination';
@@ -30,6 +27,7 @@ import { ConflictInterventions } from '../entities/conflict.intervention.entity'
 import { ImpactAssessments } from '../entities/impact.assessment.entity';
 import { PropertyDamages } from '../entities/property.damage.entity';
 import { ConflictFilters } from '../dto/conflicts.filters.dto';
+import { url } from 'inspector';
 
 @Injectable()
 export class ConflictService extends CursorPaginator<Conflicts> {
@@ -38,11 +36,6 @@ export class ConflictService extends CursorPaginator<Conflicts> {
     private readonly conflictRepository: Repository<Conflicts>,
     @InjectRepository(Actors)
     private readonly conflictActorRepository: Repository<Actors>,
-    @InjectRepository(RootCauses)
-    private readonly conflictRootCauseRepository: Repository<RootCauses>,
-    @InjectRepository(InformationSources)
-    private readonly conflictInfoSourceRepository: Repository<InformationSources>,
-
     private readonly dataSource: DataSource,
   ) {
     super();
@@ -83,9 +76,8 @@ export class ConflictService extends CursorPaginator<Conflicts> {
       }
 
       if (media_uploads && media_uploads.length > 0) {
-        conflict.media_uploads = media_uploads.map((url) => {
-          const upload = new ConflictUploads();
-          upload.url = url;
+        conflict.media_uploads = media_uploads.map((imageUpload) => {
+          const upload = this.createMediaUpload(imageUpload);
           upload.conflict = conflict;
           return upload;
         });
@@ -290,6 +282,7 @@ export class ConflictService extends CursorPaginator<Conflicts> {
           id,
           approval_status: ConflictApprovalStatus.PENDING,
         },
+        relations: ['media_uploads'],
       });
 
       if (!conflict) {
@@ -323,6 +316,7 @@ export class ConflictService extends CursorPaginator<Conflicts> {
           'information_sources',
           'actors',
           'interventions',
+          'media_uploads',
         ],
       });
 
@@ -353,8 +347,14 @@ export class ConflictService extends CursorPaginator<Conflicts> {
     dto: EditConflictDto,
     manager: EntityManager,
   ): Promise<void> {
-    const { basic_info, details, actors, intervention, impact_assessment } =
-      dto;
+    const {
+      basic_info,
+      details,
+      actors,
+      intervention,
+      impact_assessment,
+      media,
+    } = dto;
 
     // Basic info
     if (basic_info) {
@@ -427,6 +427,18 @@ export class ConflictService extends CursorPaginator<Conflicts> {
       conflict.impact_assessments =
         this.createImpactAssessment(impact_assessment);
     }
+
+    // Media Upload
+    if (media && media?.length > 0) {
+      const mediaUploads = media?.map((image) => {
+        return this.createMediaUpload(image, conflict);
+      });
+
+      conflict.media_uploads = [
+        ...(conflict.media_uploads || []),
+        ...mediaUploads,
+      ];
+    }
   }
 
   /**
@@ -487,5 +499,16 @@ export class ConflictService extends CursorPaginator<Conflicts> {
     propertyDamage.description = description;
 
     return propertyDamage;
+  }
+
+  private createMediaUpload(media: any, conflict?: Conflicts) {
+    const upload = new ConflictUploads();
+    upload.url = media.url;
+
+    if (conflict) {
+      upload.conflict = conflict;
+    }
+
+    return upload;
   }
 }

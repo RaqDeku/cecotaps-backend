@@ -1,6 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiResponse } from 'src/common/api.response';
 import { AnalyticsService } from '../services/analytics.service';
+import { Public } from 'src/domains/admin/auth.guard';
 
 @Controller('conflicts-analytics')
 export class AnalyticsController extends ApiResponse {
@@ -8,6 +9,7 @@ export class AnalyticsController extends ApiResponse {
     super();
   }
 
+  @Public()
   @Get('/')
   async getConflictsAnalytics() {
     return this.response({
@@ -15,6 +17,7 @@ export class AnalyticsController extends ApiResponse {
     });
   }
 
+  @Public()
   @Get('/actors-involvement')
   async getActorsInvolvement() {
     return this.response({
@@ -22,6 +25,7 @@ export class AnalyticsController extends ApiResponse {
     });
   }
 
+  @Public()
   @Get('/interventions-stats')
   async getInterventionsStats() {
     return this.response({
@@ -29,6 +33,7 @@ export class AnalyticsController extends ApiResponse {
     });
   }
 
+  @Public()
   @Get('/regional-breakdown')
   async getRegionalBreakdown() {
     return this.response({
@@ -36,6 +41,7 @@ export class AnalyticsController extends ApiResponse {
     });
   }
 
+  @Public()
   @Get('/conflict-trends')
   async getConflictTrends() {
     return this.response({

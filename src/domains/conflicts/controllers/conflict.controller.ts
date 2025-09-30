@@ -7,6 +7,7 @@ import { ApiResponse } from 'src/common/api.response';
 import { ConflictResponses } from '../responses/conflicts.response';
 import { ConflictFilters } from '../dto/conflicts.filters.dto';
 import { AnalyticsService } from '../services/analytics.service';
+import { Public } from 'src/domains/admin/auth.guard';
 
 @Controller('conflicts')
 export class ConflictController extends ApiResponse {
@@ -17,11 +18,13 @@ export class ConflictController extends ApiResponse {
     super();
   }
 
+  @Public()
   @Post('/report')
   async reportConflict(@Body() reportConflictDto: ReportConflictDto) {
     return await this.conflictService.reportConflict(reportConflictDto);
   }
 
+  @Public()
   @Get('/locations')
   async getConflictsLocations(@Query() conflictFilters: ConflictFilters) {
     return this.response({
@@ -58,6 +61,7 @@ export class ConflictController extends ApiResponse {
     });
   }
 
+  @Public()
   @Get('/:id/details')
   async showDetails(@Param('id') id: number) {
     return this.response({

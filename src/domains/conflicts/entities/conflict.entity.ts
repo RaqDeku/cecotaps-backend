@@ -22,6 +22,7 @@ import { InformationSources } from './conflict.info.source.entity';
 import { ConflictInterventions } from './conflict.intervention.entity';
 import { ImpactAssessments } from './impact.assessment.entity';
 import { InterventionActions } from './intervention.actions.entity';
+import { Admin } from 'src/domains/admin/entities/admin.entity';
 
 @Entity()
 export class Conflicts {
@@ -86,6 +87,10 @@ export class Conflicts {
   deleted_at: Date;
 
   //Relations
+  @OneToOne(() => Admin, (admin) => admin.conflicts)
+  @JoinColumn({ name: 'approved_by' })
+  admin: Admin;
+
   @OneToOne(() => ConflictLocations, (location) => location.conflict, {
     cascade: true,
   })

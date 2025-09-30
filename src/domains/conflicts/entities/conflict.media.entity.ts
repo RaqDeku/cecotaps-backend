@@ -1,6 +1,7 @@
 import { Column, Entity } from 'typeorm';
 import * as typeorm from 'typeorm';
 import { Conflicts } from './conflict.entity';
+import { Expose } from 'class-transformer';
 
 @Entity()
 export class ConflictUploads {
@@ -26,4 +27,9 @@ export class ConflictUploads {
   @typeorm.ManyToOne(() => Conflicts, (conflict) => conflict.media_uploads)
   @typeorm.JoinColumn({ name: 'conflict_id' })
   conflict: Conflicts;
+
+  @Expose()
+  get fullUrl(): string {
+    return `https://${process.env.CLOUDFRONT_DOMAIN}/${this.url}`;
+  }
 }

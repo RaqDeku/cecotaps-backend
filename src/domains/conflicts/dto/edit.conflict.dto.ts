@@ -13,6 +13,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { MediaUpload } from './report.conflict.dto';
 
 class BasicInfo {
   @IsString()
@@ -112,10 +113,8 @@ export class EditConflictDto {
   @Type(() => Details)
   details: Details;
 
-  @IsArray()
   @IsOptional()
-  @IsString({ each: true })
-  media?: string[];
+  media?: MediaUpload[];
 
   @IsArray()
   @IsNumber({}, { each: true })
@@ -128,6 +127,6 @@ export class EditConflictDto {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => ImpactAssessment)
+  // @Type(() => ImpactAssessment)
   impact_assessment?: ImpactAssessment;
 }

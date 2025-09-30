@@ -39,6 +39,16 @@ class Reporter {
   phone: string;
 }
 
+export class MediaUpload {
+  @IsOptional()
+  @IsNumber()
+  conflict_id?: number;
+
+  @IsString()
+  @IsNotEmpty()
+  url: string;
+}
+
 export class ReportConflictDto {
   @IsNumber()
   @IsNotEmpty()
@@ -70,9 +80,9 @@ export class ReportConflictDto {
   @IsNotEmpty()
   actors: Actors[];
 
-  @IsString({ each: true })
   @IsOptional()
-  media_uploads?: string[];
+  // @IsString({ each: true })
+  media_uploads?: MediaUpload[];
 
   @IsOptional()
   reporter?: Reporter;

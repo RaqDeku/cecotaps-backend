@@ -20,6 +20,8 @@ import { InterventionActionsController } from './controllers/interventions.contr
 import { AnalyticsService } from './services/analytics.service';
 import { AnalyticsController } from './controllers/analytics.controller';
 import { Regions } from '../regions/region.entity';
+import { MediaUploadController } from './controllers/upload.controller';
+import { MediaUploadService } from './services/media.upload.service';
 
 @Module({
   imports: [
@@ -43,12 +45,14 @@ import { Regions } from '../regions/region.entity';
     ConflictController,
     InterventionActionsController,
     AnalyticsController,
+    MediaUploadController,
   ],
   providers: [
     ActorsService,
     ConflictService,
     ConflictInterventionActionsService,
     AnalyticsService,
+    MediaUploadService,
   ],
 })
 export class ConflictsModule {}
