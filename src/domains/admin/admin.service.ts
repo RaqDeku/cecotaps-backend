@@ -34,10 +34,10 @@ export class AdminService {
   async registerAdmin(creds: AuthCredentialsDto) {
     const { email, password, name } = creds;
 
-    const adminExists = await this.adminRepository.findOneBy({});
-    if (adminExists) {
-      throw new BadRequestException('Admin already exists, proceed to login');
-    }
+    // const adminExists = await this.adminRepository.findOneBy({});
+    // if (adminExists) {
+    //   throw new BadRequestException('Admin already exists, proceed to login');
+    // }
 
     await this.dataSource.transaction(async (manager) => {
       const admin = manager.getRepository(Admin).create({
@@ -83,9 +83,9 @@ export class AdminService {
       throw new BadRequestException('Invalid credentials');
     }
 
-    if (!admin.is_email_verified) {
-      throw new BadRequestException('Kindly verify your email to proceed');
-    }
+    // if (!admin.is_email_verified) {
+    //   throw new BadRequestException('Kindly verify your email to proceed');
+    // }
 
     const isPasswordValid = await bcrypt.compare(password, admin.password);
 

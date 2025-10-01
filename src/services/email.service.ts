@@ -1,22 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import nodemailer from 'nodemailer';
+// import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { VerifyEmailEvent } from 'src/events/verify.email.event';
 
 @Injectable()
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private transporter: Resend;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT!),
-      // secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+    // this.transporter = nodemailer.createTransport({
+    //   host: process.env.SMTP_HOST,
+    //   port: parseInt(process.env.SMTP_PORT!),
+    //   // secure: process.env.SMTP_SECURE === 'true',
+    //   auth: {
+    //     user: process.env.SMTP_USER,
+    //     pass: process.env.SMTP_PASS,
+    //   },
+    // });
+    this.transporter = new Resend(process.env.RESEND_API_KEYS);
   }
 
   @OnEvent('verify.email', { async: true })
@@ -24,8 +26,8 @@ export class EmailService {
     const { email, url } = verifyEmailEvent;
 
     try {
-      await this.transporter.sendMail({
-        from: process.env.FROM_EMAIL,
+      await this.transporter.emails.send({
+        from: process.env.FROM_EMAIL!,
         to: email,
         subject: 'Verify Email',
         html: `
@@ -45,8 +47,8 @@ export class EmailService {
     const { email, url } = verifyEmailEvent;
 
     try {
-      await this.transporter.sendMail({
-        from: process.env.FROM_EMAIL,
+      await this.transporter.emails.send({
+        from: process.env.FROM_EMAIL!,
         to: email,
         subject: 'Request To Reset Password',
         html: `
