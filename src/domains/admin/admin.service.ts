@@ -425,7 +425,11 @@ export class AdminService {
   }
 
   validateCookie(value: string, cookie: string): boolean {
-    const [hash, nonce, timestamp] = cookie.split('.');
+    if (!cookie) {
+      return false;
+    }
+
+    const [hash, nonce, timestamp] = cookie?.split('.');
     if (!hash || !nonce || !timestamp) {
       return false;
     }
