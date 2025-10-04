@@ -297,7 +297,7 @@ export class ConflictService extends CursorPaginator<Conflicts> {
 
         await manager.getRepository(Conflicts).save(conflict);
 
-        return { message: 'Conflict approved successfully' };
+        return 'Conflict approved successfully';
       } catch (error) {
         console.error('Error approving conflict:', error);
         throw new InternalServerErrorException('Failed to approve conflict');
@@ -331,11 +331,38 @@ export class ConflictService extends CursorPaginator<Conflicts> {
 
         await manager.getRepository(Conflicts).save(conflict);
 
-        return { message: 'Conflict edited successfully' };
+        return 'Conflict edited successfully';
       } catch (error) {
         console.error('Error editing conflict:', error);
         throw new InternalServerErrorException('Failed to edit conflict');
       }
+    });
+  }
+
+  async deleteConflict(conflictId: number) {
+    return await this.dataSource.transaction(async (manager) => {
+      await manager
+        .getRepository(ConflictUploads)
+        .softDelete({ conflict: { id: conflictId } });
+
+      await manager
+        .getRepository(ImpactAssessments)
+        .softDelete({ conflict: { id: conflictId } });
+
+      await manager
+        .getRepository(RootCauses)
+        .softDelete({ conflict: { id: conflictId } });
+
+      const location = await manager.getRepository(ConflictLocations).findOne({
+        where: { conflict: { id: conflictId } },
+      });
+      if (location) {
+        await manager.getRepository(ConflictLocations).softDelete(location.id);
+      }
+
+      await manager.getRepository(Conflicts).softDelete(conflictId);
+
+      return 'Conflict deleted successfully';
     });
   }
 

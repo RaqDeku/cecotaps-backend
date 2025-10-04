@@ -60,7 +60,7 @@ export class AnalyticsService {
       .leftJoin(
         'actors.conflicts',
         'conflicts',
-        'conflicts.approval_status = :status',
+        'conflicts.approval_status = :status AND conflicts.deleted_at IS NULL',
         {
           status: ConflictApprovalStatus.APPROVED,
         },
@@ -96,7 +96,7 @@ export class AnalyticsService {
       .leftJoin(
         'action.conflict',
         'conflicts',
-        'conflicts.approval_status = :status',
+        'conflicts.approval_status = :status AND conflicts.deleted_at IS NULL',
         { status: ConflictApprovalStatus.APPROVED },
       )
       .select('action.id', 'id')

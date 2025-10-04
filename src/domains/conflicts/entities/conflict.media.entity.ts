@@ -1,4 +1,4 @@
-import { Column, Entity } from 'typeorm';
+import { Column, DeleteDateColumn, Entity } from 'typeorm';
 import * as typeorm from 'typeorm';
 import { Conflicts } from './conflict.entity';
 import { Expose } from 'class-transformer';
@@ -20,7 +20,7 @@ export class ConflictUploads {
   @Column({ type: 'timestamp', nullable: false })
   updated_at: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
   deleted_at: Date;
 
   //Relations

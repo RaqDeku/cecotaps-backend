@@ -1,5 +1,6 @@
 import {
   Column,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -24,7 +25,7 @@ export class PropertyDamages {
   @Column({ type: 'timestamp', nullable: false })
   updated_at: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
   deleted_at: Date;
 
   //Relations

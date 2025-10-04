@@ -5,6 +5,7 @@ import {
   OneToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { PropertyDamages } from './property.damage.entity';
 import { Conflicts } from './conflict.entity';
@@ -29,7 +30,7 @@ export class ImpactAssessments {
   @Column({ type: 'timestamp', nullable: false })
   updated_at: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
   deleted_at: Date;
 
   // Relations

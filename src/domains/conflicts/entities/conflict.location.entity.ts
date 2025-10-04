@@ -27,7 +27,7 @@ export class ConflictLocations {
   @typeorm.Column({ type: 'timestamp', nullable: false })
   updated_at: Date;
 
-  @typeorm.Column({ type: 'timestamp', nullable: true })
+  @typeorm.DeleteDateColumn({ type: 'timestamp', nullable: true })
   deleted_at: Date;
 
   //Relations

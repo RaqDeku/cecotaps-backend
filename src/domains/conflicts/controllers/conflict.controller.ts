@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ReportConflictDto } from '../dto/report.conflict.dto';
 import { ConflictService } from '../services/conflict.service';
 import { CursorPaginationDto } from '../../../common/pagination/cursor.pagination.dto';
@@ -74,7 +83,13 @@ export class ConflictController extends ApiResponse {
     @Param('id') id: number,
     @Body() editConflictDto: EditConflictDto,
   ) {
-    return await this.conflictService.editConflict(Number(id), editConflictDto);
+    return this.response({
+      message: await this.conflictService.editConflict(
+        Number(id),
+        editConflictDto,
+      ),
+      data: null,
+    });
   }
 
   @Put('/approve/:id')
@@ -82,9 +97,20 @@ export class ConflictController extends ApiResponse {
     @Param('id') id: number,
     @Body() editConflictDto: EditConflictDto,
   ) {
-    return await this.conflictService.approveConflict(
-      Number(id),
-      editConflictDto,
-    );
+    return this.response({
+      message: await this.conflictService.approveConflict(
+        Number(id),
+        editConflictDto,
+      ),
+      data: null,
+    });
+  }
+
+  @Delete('/:id')
+  async deleteConflict(@Param('id') id: number) {
+    return this.response({
+      message: await this.conflictService.deleteConflict(id),
+      data: null,
+    });
   }
 }

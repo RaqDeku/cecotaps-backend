@@ -1,4 +1,10 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import * as typeorm from 'typeorm';
 import { Conflicts } from './conflict.entity';
 
@@ -22,7 +28,7 @@ export class ConflictReporters {
   @Column({ type: 'timestamp', nullable: false })
   updated_at: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
   deleted_at: Date;
 
   //Relations
