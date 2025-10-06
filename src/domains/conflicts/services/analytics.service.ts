@@ -23,34 +23,39 @@ export class AnalyticsService {
   ) {}
 
   async getConflictsStats() {
-    const queryBuilder =
-      this.conflictsRepository.createQueryBuilder('conflicts');
-
-    const totalConflicts = await queryBuilder.getCount();
-    const activeConflicts = await queryBuilder
-      .where('conflicts.status = :status', { status: ConflictStatus.ACTIVE })
-      .getCount();
-    const resolvedConflicts = await queryBuilder
-      .where('conflicts.status = :status', { status: ConflictStatus.RESOLVED })
-      .getCount();
-    const pendingConflictsReports = await queryBuilder
-      .where('conflicts.approval_status = :approvalStatus', {
-        approvalStatus: ConflictApprovalStatus.PENDING,
+    const result = await this.conflictsRepository
+      .createQueryBuilder('conflicts')
+      .select('COUNT(*)', 'totalConflicts')
+      .addSelect(
+        `SUM(CASE WHEN conflicts.status = :active THEN 1 ELSE 0 END)`,
+        'activeConflicts',
+      )
+      .addSelect(
+        `SUM(CASE WHEN conflicts.status = :resolved THEN 1 ELSE 0 END)`,
+        'resolvedConflicts',
+      )
+      .addSelect(
+        `SUM(CASE WHEN conflicts.approval_status = :pending THEN 1 ELSE 0 END)`,
+        'pendingConflictsReports',
+      )
+      .addSelect(
+        `SUM(CASE WHEN conflicts.severity = :high THEN 1 ELSE 0 END)`,
+        'highSeverityConflicts',
+      )
+      .setParameters({
+        active: ConflictStatus.ACTIVE,
+        resolved: ConflictStatus.RESOLVED,
+        pending: ConflictApprovalStatus.PENDING,
+        high: ConflictSeverity.HIGH,
       })
-      .getCount();
-
-    const highSeverityConflicts = await queryBuilder
-      .where('conflicts.severity = :severity', {
-        severity: ConflictSeverity.HIGH,
-      })
-      .getCount();
+      .getRawOne();
 
     return {
-      totalConflicts,
-      activeConflicts,
-      resolvedConflicts,
-      pendingConflictsReports,
-      highSeverityConflicts,
+      totalConflicts: Number(result.totalConflicts),
+      activeConflicts: Number(result.activeConflicts),
+      resolvedConflicts: Number(result.resolvedConflicts),
+      pendingConflictsReports: Number(result.pendingConflictsReports),
+      highSeverityConflicts: Number(result.highSeverityConflicts),
     };
   }
 

@@ -44,13 +44,16 @@ class BasicInfo {
 }
 
 class Details {
+  @IsNotEmpty()
   @IsString()
   description: string;
 
+  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
   root_causes: string[];
 
+  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
   trigger_events: string[];
@@ -105,24 +108,27 @@ class InfoSource {
 }
 
 export class EditConflictDto {
+  @IsNotEmpty()
   @ValidateNested()
-  @Type(() => BasicInfo)
+  // @Type(() => BasicInfo)
   basic_info: BasicInfo;
 
+  @IsNotEmpty()
   @ValidateNested()
-  @Type(() => Details)
+  // @Type(() => Details)
   details: Details;
 
   @IsOptional()
   media?: MediaUpload[];
 
+  @IsNotEmpty()
   @IsArray()
   @IsNumber({}, { each: true })
   actors: number[];
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => Intervention)
+  // @Type(() => Intervention)
   intervention?: Intervention;
 
   @IsOptional()

@@ -32,6 +32,9 @@ export class PropertyDamages {
   @ManyToOne(
     () => ImpactAssessments,
     (impactAssessment) => impactAssessment.property_damages,
+    {
+      onDelete: 'CASCADE',
+    },
   )
   @JoinColumn({ name: 'impact_assessment_id' })
   impact_assessment: ImpactAssessments;

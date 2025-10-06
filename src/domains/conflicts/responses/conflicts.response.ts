@@ -119,8 +119,8 @@ export class ConflictResponses {
       title: conflict?.title,
       type: conflict?.conflict_type,
       severity: conflict?.severity,
-      location: conflict?.location?.district,
-      status: conflict?.status,
+      district: conflict?.location?.district?.name,
+      region: conflict?.location?.region?.name,
       overview: {
         date_reported: conflict?.date_reported,
         reported_by: conflict?.reporter,

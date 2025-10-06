@@ -2,13 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConflictUploads } from '../entities/conflict.media.entity';
 import { Repository } from 'typeorm';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectsCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   MediaUpload,
   RequestMediaUploadDto,
 } from '../dto/request.media.upload.dto';
 import { SaveMediaUploadDto } from '../dto/save.media.upload.dto';
+import { OnEvent } from '@nestjs/event-emitter';
+import { DeleteMediaEvent } from 'src/events/delete.media.event';
 
 @Injectable()
 export class MediaUploadService {
@@ -60,5 +66,25 @@ export class MediaUploadService {
       where: { conflict_id: conflictId },
       order: { created_at: 'DESC' },
     });
+  }
+
+  @OnEvent('delete.uploaded-media')
+  async deleteUploadedMedia(deleteMediaEvent: DeleteMediaEvent) {
+    const { media } = deleteMediaEvent;
+
+    if (!media || media.length === 0) return;
+
+    try {
+      const deleteParams = {
+        Bucket: process.env.AWS_BUCKET_NAME!,
+        Delete: {
+          Objects: media.map((fileUrl) => ({ Key: fileUrl })),
+        },
+      };
+
+      await this.s3Bucket.send(new DeleteObjectsCommand(deleteParams));
+    } catch (error) {
+      console.error('Failed to delete uploaded media:', error);
+    }
   }
 }

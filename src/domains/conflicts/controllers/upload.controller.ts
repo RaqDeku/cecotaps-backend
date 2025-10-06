@@ -4,10 +4,15 @@ import { MediaUploadService } from '../services/media.upload.service';
 import { RequestMediaUploadDto } from '../dto/request.media.upload.dto';
 import { SaveMediaUploadDto } from '../dto/save.media.upload.dto';
 import { Public } from 'src/domains/admin/auth.guard';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DeleteMediaEvent } from 'src/events/delete.media.event';
 
 @Controller('uploads')
 export class MediaUploadController extends ApiResponse {
-  constructor(private readonly mediaUploadService: MediaUploadService) {
+  constructor(
+    private readonly mediaUploadService: MediaUploadService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {
     super();
   }
 
@@ -40,5 +45,16 @@ export class MediaUploadController extends ApiResponse {
     return this.response({
       data: this.mediaUploadService.getUploadsForConflict(conflictId),
     });
+  }
+
+  @Public()
+  @Post('delete')
+  async deleteMediaUpload(@Body() { media }: { media: string[] }) {
+    const deleteMediaEvent = new DeleteMediaEvent();
+    deleteMediaEvent.media = media;
+
+    this.eventEmitter.emit('delete.uploaded-media', deleteMediaEvent);
+
+    return this.response({ data: null });
   }
 }

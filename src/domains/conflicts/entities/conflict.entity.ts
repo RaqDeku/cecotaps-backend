@@ -100,6 +100,7 @@ export class Conflicts {
 
   @OneToMany(() => ConflictUploads, (upload) => upload.conflict, {
     cascade: true,
+    onDelete: 'CASCADE',
   })
   media_uploads: ConflictUploads[];
 

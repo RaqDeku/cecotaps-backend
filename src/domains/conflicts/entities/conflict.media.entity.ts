@@ -24,7 +24,9 @@ export class ConflictUploads {
   deleted_at: Date;
 
   //Relations
-  @typeorm.ManyToOne(() => Conflicts, (conflict) => conflict.media_uploads)
+  @typeorm.ManyToOne(() => Conflicts, (conflict) => conflict.media_uploads, {
+    onDelete: 'CASCADE',
+  })
   @typeorm.JoinColumn({ name: 'conflict_id' })
   conflict: Conflicts;
 

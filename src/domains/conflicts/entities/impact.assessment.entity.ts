@@ -40,6 +40,7 @@ export class ImpactAssessments {
     {
       cascade: true,
       orphanedRowAction: 'delete',
+      onDelete: 'CASCADE',
     },
   )
   property_damages: PropertyDamages[];

@@ -106,6 +106,14 @@ export class ConflictController extends ApiResponse {
     });
   }
 
+  @Delete('/reject/:id')
+  async rejectConflictReport(@Param('id') id: number) {
+    return this.response({
+      message: await this.conflictService.rejectConflict(id),
+      data: null,
+    });
+  }
+
   @Delete('/:id')
   async deleteConflict(@Param('id') id: number) {
     return this.response({

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { ReportConflictDto } from '../dto/report.conflict.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -27,7 +28,8 @@ import { ConflictInterventions } from '../entities/conflict.intervention.entity'
 import { ImpactAssessments } from '../entities/impact.assessment.entity';
 import { PropertyDamages } from '../entities/property.damage.entity';
 import { ConflictFilters } from '../dto/conflicts.filters.dto';
-import { url } from 'inspector';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DeleteMediaEvent } from 'src/events/delete.media.event';
 
 @Injectable()
 export class ConflictService extends CursorPaginator<Conflicts> {
@@ -37,6 +39,7 @@ export class ConflictService extends CursorPaginator<Conflicts> {
     @InjectRepository(Actors)
     private readonly conflictActorRepository: Repository<Actors>,
     private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     super();
   }
@@ -100,8 +103,40 @@ export class ConflictService extends CursorPaginator<Conflicts> {
       return { message: 'Conflict reported successfully' };
     } catch (error) {
       console.error('Error reporting conflict:', error);
+
+      if (media_uploads && media_uploads.length > 0) {
+        const deleteMediaEvent = new DeleteMediaEvent();
+        deleteMediaEvent.media = media_uploads.map((u) => u.url);
+
+        this.eventEmitter.emit('delete.uploaded-media', deleteMediaEvent);
+      }
+
       throw error;
     }
+  }
+
+  async rejectConflict(conflictId: number) {
+    return await this.dataSource.transaction(async (manager) => {
+      const conflict = await manager.getRepository(Conflicts).findOne({
+        where: { id: conflictId },
+        relations: ['media_uploads', 'reporter', 'location', 'actors'],
+      });
+
+      if (!conflict) {
+        throw new NotFoundException(`Conflict not found`);
+      }
+
+      if (conflict.media_uploads?.length > 0) {
+        const deleteMediaEvent = new DeleteMediaEvent();
+        deleteMediaEvent.media = conflict.media_uploads.map((m) => m.url);
+
+        this.eventEmitter.emit('delete.uploaded-media', deleteMediaEvent);
+      }
+
+      await manager.remove(conflict);
+
+      return 'Conflict report rejected successfully';
+    });
   }
 
   async getConflictsReports(paginationDto: CursorPaginationDto) {
@@ -172,6 +207,7 @@ export class ConflictService extends CursorPaginator<Conflicts> {
     const conflict = await this.getConflictBaseQuery(id, [
       'impact_assessments.property_damages',
       'interventions.actors',
+      'location.region',
     ]);
 
     if (!conflict) {
@@ -276,6 +312,8 @@ export class ConflictService extends CursorPaginator<Conflicts> {
   }
 
   async approveConflict(id: number, editConflictDto: EditConflictDto) {
+    const { media } = editConflictDto;
+
     return await this.dataSource.transaction(async (manager) => {
       const conflict = await manager.getRepository(Conflicts).findOne({
         where: {
@@ -300,12 +338,22 @@ export class ConflictService extends CursorPaginator<Conflicts> {
         return 'Conflict approved successfully';
       } catch (error) {
         console.error('Error approving conflict:', error);
+
+        if (media && media.length > 0) {
+          const deleteMediaEvent = new DeleteMediaEvent();
+          deleteMediaEvent.media = media.map((u) => u.url);
+
+          this.eventEmitter.emit('delete.uploaded-media', deleteMediaEvent);
+        }
+
         throw new InternalServerErrorException('Failed to approve conflict');
       }
     });
   }
 
   async editConflict(id: number, editConflictDto: EditConflictDto) {
+    const { media } = editConflictDto;
+
     return await this.dataSource.transaction(async (manager) => {
       const conflict = await manager.getRepository(Conflicts).findOne({
         where: {
@@ -334,6 +382,14 @@ export class ConflictService extends CursorPaginator<Conflicts> {
         return 'Conflict edited successfully';
       } catch (error) {
         console.error('Error editing conflict:', error);
+
+        if (media && media.length > 0) {
+          const deleteMediaEvent = new DeleteMediaEvent();
+          deleteMediaEvent.media = media.map((u) => u.url);
+
+          this.eventEmitter.emit('delete.uploaded-media', deleteMediaEvent);
+        }
+
         throw new InternalServerErrorException('Failed to edit conflict');
       }
     });
@@ -447,9 +503,25 @@ export class ConflictService extends CursorPaginator<Conflicts> {
 
     // Impact Assessment
     if (impact_assessment) {
-      await manager.getRepository(ImpactAssessments).delete({
-        conflict_id: conflict?.id,
-      });
+      const impactAssessment = await manager
+        .getRepository(ImpactAssessments)
+        .findOne({
+          where: {
+            conflict_id: conflict?.id,
+          },
+        });
+
+      if (impactAssessment) {
+        const propertyRepo = manager.getRepository(PropertyDamages);
+
+        await propertyRepo.delete({
+          impact_assessment_id: impactAssessment?.id,
+        });
+
+        await manager.getRepository(ImpactAssessments).delete({
+          conflict_id: conflict.id,
+        });
+      }
 
       conflict.impact_assessments =
         this.createImpactAssessment(impact_assessment);
