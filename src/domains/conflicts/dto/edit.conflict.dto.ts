@@ -2,7 +2,7 @@ import {
   ConflictSeverity,
   ConflictStatus,
 } from '../constants/conflict.statuses';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsDate,
@@ -15,12 +15,25 @@ import {
 } from 'class-validator';
 import { MediaUpload } from './report.conflict.dto';
 
+class InfoSource {
+  @IsString()
+  name: string;
+
+  @IsString()
+  reference: string;
+}
+
 class BasicInfo {
   @IsString()
   title: string;
 
   @IsString()
   type: string;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  conflict_date?: Date;
 
   @IsString()
   @IsEnum(ConflictSeverity, {
@@ -58,6 +71,7 @@ class Details {
   @IsString({ each: true })
   trigger_events: string[];
 
+  @IsNotEmpty()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InfoSource)
@@ -99,23 +113,15 @@ export class ImpactAssessment {
   property_damages: string[];
 }
 
-class InfoSource {
-  @IsString()
-  name: string;
-
-  @IsString()
-  reference: string;
-}
-
 export class EditConflictDto {
   @IsNotEmpty()
   @ValidateNested()
-  // @Type(() => BasicInfo)
+  @Type(() => BasicInfo)
   basic_info: BasicInfo;
 
   @IsNotEmpty()
   @ValidateNested()
-  // @Type(() => Details)
+  @Type(() => Details)
   details: Details;
 
   @IsOptional()
@@ -128,11 +134,11 @@ export class EditConflictDto {
 
   @IsOptional()
   @ValidateNested()
-  // @Type(() => Intervention)
+  @Type(() => Intervention)
   intervention?: Intervention;
 
   @IsOptional()
   @ValidateNested()
-  // @Type(() => ImpactAssessment)
+  @Type(() => ImpactAssessment)
   impact_assessment?: ImpactAssessment;
 }

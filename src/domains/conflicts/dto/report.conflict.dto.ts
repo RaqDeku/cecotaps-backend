@@ -78,10 +78,12 @@ export class ReportConflictDto {
   conflict_type: string;
 
   @IsNotEmpty()
+  conflict_date?: Date;
+
+  @IsNotEmpty()
   actors: Actors[];
 
   @IsOptional()
-  // @IsString({ each: true })
   media_uploads?: MediaUpload[];
 
   @IsOptional()

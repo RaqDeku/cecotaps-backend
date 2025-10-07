@@ -52,6 +52,7 @@ export class ConflictService extends CursorPaginator<Conflicts> {
       district_id,
       actors,
       media_uploads,
+      conflict_date,
       reporter,
       description,
       severity,
@@ -71,6 +72,7 @@ export class ConflictService extends CursorPaginator<Conflicts> {
       conflict.location = conflictLocation;
       conflict.description = description;
       conflict.severity = severity;
+      conflict.conflict_date = conflict_date && new Date(conflict_date);
 
       if (actors?.length > 0) {
         conflict.actors = await this.conflictActorRepository.findBy({
@@ -265,7 +267,7 @@ export class ConflictService extends CursorPaginator<Conflicts> {
 
     if (from_date && to_date) {
       queryBuilder.andWhere(
-        'conflict.date_reported BETWEEN :from_date AND :to_date',
+        '(conflict.date_reported BETWEEN :from_date AND :to_date OR conflict.conflict_date BETWEEN :from_date AND :to_date)',
         {
           from_date,
           to_date,
@@ -445,6 +447,10 @@ export class ConflictService extends CursorPaginator<Conflicts> {
       conflict.conflict_type = basic_info.type ?? conflict.conflict_type;
       conflict.severity = basic_info.severity ?? conflict.severity;
       conflict.status = basic_info.status ?? conflict.status;
+      conflict.conflict_date =
+        basic_info?.conflict_date !== undefined
+          ? new Date(basic_info.conflict_date)
+          : conflict?.conflict_date;
 
       if (basic_info.intervention_actions?.length > 0) {
         conflict.interventions_actions = await manager

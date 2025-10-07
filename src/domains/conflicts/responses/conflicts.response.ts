@@ -19,6 +19,7 @@ export interface EditConflictPayload {
   basic_info: {
     title: string;
     type: string;
+    conflict_date?: any;
     location: string;
     severity: string;
     intervention_actions: number[];
@@ -67,6 +68,7 @@ export class ConflictResponses {
       basic_info: {
         title: conflict?.title,
         type: conflict?.conflict_type,
+        conflict_date: conflict?.conflict_date,
         location: conflict?.location?.district?.name,
         severity: conflict?.severity,
         status: conflict?.status,
@@ -93,7 +95,7 @@ export class ConflictResponses {
       actors: conflict?.actors?.map((actor) => actor.id),
       media: conflict?.media_uploads,
       intervention: null,
-      impact_assessment: {
+      impact_assessment: conflict?.impact_assessments && {
         ...conflict?.impact_assessments,
         property_damages: conflict?.impact_assessments?.property_damages?.map(
           (damage) => damage.description,

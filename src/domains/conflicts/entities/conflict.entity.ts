@@ -55,6 +55,9 @@ export class Conflicts {
   @Column({ type: 'date', nullable: false })
   date_reported: Date;
 
+  @Column({ type: 'date', nullable: true })
+  conflict_date?: Date;
+
   @Column({ type: 'timestamp', nullable: false })
   last_updated: Date;
 
