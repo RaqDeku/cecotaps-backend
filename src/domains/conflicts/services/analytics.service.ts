@@ -96,6 +96,13 @@ export class AnalyticsService {
   }
 
   async interventionsStats() {
+    const conflictsResolved = await this.conflictsRepository
+      .createQueryBuilder('conflicts')
+      .where('conflicts.status = :status AND conflicts.deleted_at IS NULL', {
+        status: ConflictStatus.RESOLVED,
+      })
+      .getCount();
+
     const queryBuilder = this.interventionActionsRepository
       .createQueryBuilder('action')
       .leftJoin(
@@ -120,8 +127,10 @@ export class AnalyticsService {
       where: { approval_status: ConflictApprovalStatus.APPROVED },
     });
 
-    return results.map((r) => ({
-      id: r.id,
+    return [
+      { name: 'Resolved', conflict_count: conflictsResolved },
+      ...results,
+    ].map((r) => ({
       name: r.name,
       percentage: this.calculatePercentage(
         totalConflicts,
