@@ -5,11 +5,11 @@ export enum ConflictApprovalStatus {
 }
 
 export enum ConflictSeverity {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  MEDIUM_HIGH = 'medium-high',
-  MEDIUM_LOW = 'medium-low',
+  LOW = 'latent',
+  MEDIUM = 'medium intensity',
+  HIGH = 'extreme',
+  MEDIUM_HIGH = 'high intensity',
+  MEDIUM_LOW = 'low intensity',
 }
 
 export enum ConflictStatus {
