@@ -125,6 +125,7 @@ export class ConflictResponses {
       region: conflict?.location?.region?.name,
       overview: {
         date_reported: conflict?.date_reported,
+        conflict_date: conflict?.conflict_date,
         reported_by: conflict?.reporter,
         last_updated: conflict?.last_updated,
         gps_coordinates: conflict?.location?.geom?.coordinates,
