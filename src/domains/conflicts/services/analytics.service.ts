@@ -245,6 +245,7 @@ export class AnalyticsService {
       LEFT JOIN conflicts c
         ON EXTRACT(YEAR FROM COALESCE(c.conflict_date, c.date_reported)) = y.year
       GROUP BY y.year
+      HAVING COUNT(c.id) FILTER (WHERE c.approval_status = $3) > 0
       ORDER BY y.year;
       `,
       [startYear, endYear, ConflictApprovalStatus.APPROVED],
