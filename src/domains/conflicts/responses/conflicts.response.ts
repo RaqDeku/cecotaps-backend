@@ -1,4 +1,4 @@
-import { ImpactAssessment, Intervention } from '../dto/edit.conflict.dto';
+import { Intervention } from '../dto/edit.conflict.dto';
 import { Actors } from '../entities/actors.entity';
 import { Conflicts } from '../entities/conflict.entity';
 import { RootCauses } from '../entities/conflict.root.cause.entity';

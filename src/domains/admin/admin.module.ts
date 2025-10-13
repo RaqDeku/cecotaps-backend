@@ -4,11 +4,9 @@ import { Admin } from './entities/admin.entity';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from './constants';
 import { AuthGuard } from './auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { Tokens } from './entities/verification.tokens.entity';
-console.log(jwtConstants.secret);
 
 @Module({
   imports: [

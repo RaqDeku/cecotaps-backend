@@ -202,7 +202,7 @@ export class AnalyticsService {
   async conflictTrends() {
     return {
       conflict_by_types: await this.getConflictTypeValues(),
-      conflict_by_time: await this.getConflictsByTime(),
+      conflict_by_time: await this.getConflictsByYear(),
     };
   }
 
@@ -221,31 +221,37 @@ export class AnalyticsService {
     }));
   }
 
-  private async getConflictsByTime(year: number = new Date().getFullYear()) {
+  private async getConflictsByYear() {
+    // Step 1: Find earliest year dynamically
+    const [{ min_year }] = await this.conflictsRepository.query(`
+      SELECT 
+        EXTRACT(YEAR FROM MIN(COALESCE(conflict_date, date_reported))) AS min_year
+      FROM conflicts
+      WHERE COALESCE(conflict_date, date_reported) IS NOT NULL;
+    `);
+
+    const startYear = Number(min_year) || new Date().getFullYear();
+    const endYear = new Date().getFullYear();
+
     const results = await this.conflictsRepository.query(
       `
-    WITH months AS (
-      SELECT generate_series(
-        make_date($1, 1, 1),
-        make_date($1, 12, 1),  
-        interval '1 month'
-      ) AS month_start
-    )
-    SELECT 
-      TO_CHAR(m.month_start, 'Mon YY') AS month,
-      COALESCE(COUNT(c.id), 0) AS value
-    FROM months m
-    LEFT JOIN conflicts c
-      ON DATE_TRUNC('month', c.date_reported) = m.month_start
-      AND c.approval_status = $2
-    GROUP BY m.month_start
-    ORDER BY m.month_start;
-    `,
-      [year, ConflictApprovalStatus.APPROVED],
+      WITH years AS (
+        SELECT generate_series(CAST($1 AS int), CAST($2 AS int), 1) AS year
+      )
+      SELECT 
+        y.year,
+        COUNT(c.id) FILTER (WHERE c.approval_status = $3) AS value
+      FROM years y
+      LEFT JOIN conflicts c
+        ON EXTRACT(YEAR FROM COALESCE(c.date_reported, c.conflict_date)) = y.year
+      GROUP BY y.year
+      ORDER BY y.year;
+      `,
+      [startYear, endYear, ConflictApprovalStatus.APPROVED],
     );
 
-    return results.map((r: { month: string; value: string }) => ({
-      month: r.month,
+    return results.map((r: { year: string; value: string }) => ({
+      year: Number(r.year),
       value: Number(r.value),
     }));
   }
