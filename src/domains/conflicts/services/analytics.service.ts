@@ -243,7 +243,7 @@ export class AnalyticsService {
         COUNT(c.id) FILTER (WHERE c.approval_status = $3) AS value
       FROM years y
       LEFT JOIN conflicts c
-        ON EXTRACT(YEAR FROM COALESCE(c.date_reported, c.conflict_date)) = y.year
+        ON EXTRACT(YEAR FROM COALESCE(c.conflict_date, c.date_reported)) = y.year
       GROUP BY y.year
       ORDER BY y.year;
       `,
